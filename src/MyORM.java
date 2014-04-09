@@ -1,4 +1,7 @@
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -168,7 +171,17 @@ public class MyORM {
         	    	mapForeignKeys.put(columnName, ForeignKey.fromRS(rsImportedKeys));
         	    }
 
-        	    String className = tableName.substring(0, 1).toUpperCase() + tableName.substring(1);
+        	    String className = "";
+        	    
+        	    int pos = tableName.indexOf("_");
+        	    
+        	    if (pos != -1) {
+        	    	//logger.debug("found _!");
+        	    	className = tableName.substring(0, 1).toUpperCase() + tableName.substring(1, pos) + tableName.substring(pos + 1).substring(0, 1).toUpperCase() + tableName.substring(pos + 2);
+        	    }
+        	    else {
+        	    	className = tableName.substring(0, 1).toUpperCase() + tableName.substring(1);
+        	    }
         	    
         	    String tableShortAlias = tableName.substring(0, 2);
         	    
@@ -781,33 +794,12 @@ public class MyORM {
         	    output +=
         	    		" +\n            \"    WHERE\" +\n";
         	    
-    	        bFirst = false;
-    	        
-        	    for (Map.Entry<String, PrimaryKey> entry : mapPrimaryKeys.entrySet()) {
-        	    	
-        	        String columnName = entry.getKey();
-        	        PrimaryKey pk = entry.getValue();
-        	        
-        	        if (!bFirst) {
-        	        	bFirst = true;
-        	        }
-        	        else {
-        	        	output += " + \" AND\" +\n";
-        	        }
-
-        	        output += "            \"    " + columnName + " = \" + " + mapJavaTypes.get(mapColumns.get(columnName).getDataType()) + ".toString(this._";
-        	        
-        	        if (mapPrimaryKeys.size() == 1) {
-        	        	output += "id";
-        	        }
-        	        else {
-        	        	output += columnName;
-        	        }
-        	        
-        	        output += ")";
-
-        	    }
-        	    
+    	        output += buildWhereSentence(
+    	        		mapColumns,
+    	        		mapPrimaryKeys,
+    	        		mapJavaTypes
+    	        	);
+    	                	    
         	    output +=
         	    	";\n" +
     	        	"\n" +
@@ -848,7 +840,8 @@ public class MyORM {
     	        	"        return ret;\n" +
     	        	"    }\n" +
     	        	"    \n";
-    	        	
+    	        
+        	    // insert
     	        	
         	    output +=
     	        	"    public int insert(Connection p_conn) throws SQLException {\n" +
@@ -928,7 +921,26 @@ public class MyORM {
 	    	        	case java.sql.Types.DECIMAL:
 	    	        	case java.sql.Types.DOUBLE:
 	    	        	case java.sql.Types.FLOAT:
-	    	        		output += "\" + (_" + columnName + " != null ? \"'\" + _" + columnName + " + \"'\" : \"null\")";
+	    	        		output += "\" + (_";
+	    	        		
+	            	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+	            	        	output += "id";
+	            	        }
+	            	        else {
+	            	        	output += columnName;
+	            	        }
+	            	        
+	            	        output += " != null ? \"'\" + _";
+
+	            	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+	            	        	output += "id";
+	            	        }
+	            	        else {
+	            	        	output += columnName;
+	            	        }
+	            	        
+	            	        output += " + \"'\" : \"null\")";
+	            	        
 	    	        		break;
 	    	        	case java.sql.Types.CHAR:
 	    	        	case java.sql.Types.VARCHAR:
@@ -953,7 +965,7 @@ public class MyORM {
     	        	"        \n" +
     	        	"        try {\n" +
     	        	"            stmt = p_conn.createStatement();\n" +
-    	        	"            \n" +
+    	        	"\n" +
     	        	"            ret = stmt.executeUpdate(str_sql";
         	    
         	    Boolean bFlag = false; 
@@ -995,6 +1007,8 @@ public class MyORM {
 
     	        output +=
     	        	"\n" +
+    	        	"            load(p_conn);\n" +
+    	        	"\n" +
     	        	"        }\n" +
     	        	"        catch (SQLException ex){\n" +
     	        	"            // handle any errors\n" +
@@ -1031,6 +1045,10 @@ public class MyORM {
     	        	"    }\n" +
     	        	"\n";
     	        
+    	        // fin insert
+    	        
+    	        // delete
+    	        
     	        output +=
     	        	"    public int delete(Connection p_conn) throws SQLException {\n" +
     	        	"\n" +
@@ -1041,32 +1059,11 @@ public class MyORM {
     	        	"            \"    DELETE FROM " + tableName + "\" +\n" +
     	        	"            \"    WHERE\" +\n";
     	        
-    	        bFirst = false;
-    	        
-        	    for (Map.Entry<String, PrimaryKey> entry : mapPrimaryKeys.entrySet()) {
-        	    	
-        	        String columnName = entry.getKey();
-        	        PrimaryKey pk = entry.getValue();
-        	        
-        	        if (!bFirst) {
-        	        	bFirst = true;
-        	        }
-        	        else {
-        	        	output += " + \" AND\" +\n";
-        	        }
-
-        	        output += "            \"    " + columnName + " = \" + " + mapJavaTypes.get(mapColumns.get(columnName).getDataType()) + ".toString(this._";
-        	        
-        	        if (mapPrimaryKeys.size() == 1) {
-        	        	output += "id";
-        	        }
-        	        else {
-        	        	output += columnName;
-        	        }
-        	        
-        	        output += ")";
-
-        	    }
+    	        output += buildWhereSentence(
+    	        		mapColumns,
+    	        		mapPrimaryKeys,
+    	        		mapJavaTypes
+    	        	);
     	        
     	        output +=
     	        	";\n" +
@@ -1100,215 +1097,304 @@ public class MyORM {
     	        	"        }\n" +
     	        	"        \n" +
     	        	"        return ret;\n" +
-    	        	"    }\n" +
-    	        	"}\n";    	        	
+    	        	"    }\n";
+    	        
+    	       // fin delete 
+    	        
+    	        
 
-    	        /*
-        	    //String member_declaration = "";
-				
-				//columns.first();
-				String java_type = "";
-				String function_type = "";
-				//String select_column = "";
-				String select_sentence = "";
-				String update_sentence = "";
-				String insert_sentence_up = "";
-				String insert_sentence_down = "";
-				String constructor_assignment = "";
-				String getters = "";
-				String setters = "";
-				String fromrs = 
-					"    public static " + className + " fromRS(ResultSet p_rs) throws SQLException {\n" +
-		            "        " + className + " ret = new " + className + "();\n\n" +		
-		            "        try {\n";
-				
-				for (Map.Entry<String, Column> entry : mapColumns.entrySet()) {
-        	    	       	    	
+    	        
+    	        
+        	    // load
+        	    
+    	        output +=
+    	        	"\n" +
+    	            "    public void load(Connection p_conn) throws SQLException {\n" +
+    	            "        " + className + " obj = null;\n" +
+    	            "        \n" +
+    	            "        String str_sql = _str_sql +\n" +
+    	            "            \"    WHERE\" +\n";
+    	        
+    	        output += buildWhereSentence(mapColumns, mapPrimaryKeys, mapJavaTypes);
+    	        
+    	        output += 
+    	        	" +\n" +
+    	            "            \"    LIMIT 0, 1\";\n" +
+    	            "        \n" +
+    	            "        //System.out.println(str_sql);\n" +
+    	            "        \n" +
+    	            "        // assume that conn is an already created JDBC connection (see previous examples)\n" +
+    	            "        Statement stmt = null;\n" +
+    	            "        ResultSet rs = null;\n" +
+    	            "        \n" +
+    	            "        try {\n" +
+    	            "            stmt = p_conn.createStatement();\n" +
+    	            "            //System.out.println(\"stmt = p_conn.createStatement() ok\");\n" +
+    	            "            rs = stmt.executeQuery(str_sql);\n" +
+    	            "            //System.out.println(\"rs = stmt.executeQuery(str_sql) ok\");\n" +
+    	            "\n" +
+    	            "            // Now do something with the ResultSet ....\n" +
+    	            "            \n" +
+    	            "            if (rs.next()) {\n" +
+    	            "                //System.out.println(\"rs.next() ok\");\n" +
+    	            "                obj = fromRS(rs);\n" +
+    	            "                //System.out.println(\"fromRS(rs) ok\");\n\n";
+    	        
+        	    for (Map.Entry<String, Column> entry : mapColumns.entrySet()) {
+        	    	
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        // construyo sentencia SELECT
+        	        // no se cargan las llaves primarias
+        	        if (mapPrimaryKeys.containsKey(columnName)) {
+        	        	continue;
+        	        }
         	        
-        	        String delta_select_sentence = "";
+        	        output += 
+        	        	"                _"; 
         	        
         	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
-        	        	delta_select_sentence = columnName + " AS id";
+        	        	output += "id";
         	        }
         	        else {
-        	        	delta_select_sentence = columnName;
-        	        }
-        	    	
-        	    	String delta_update_sentence = columnName + " = \" + (_" + columnName + " != null ? _" + columnName + " : \"null\")";
-        	    	String delta_insert_sentence_up = columnName;
-        	    	String delta_insert_sentence_down = "\" + (_" + columnName + " != null ? _" + columnName + ".toString() : \"null\")";
-        	    	
-        	        if (!select_sentence.equals("")) {
-        	        	select_sentence += ", \" +\n";
-        	        	update_sentence += ", \" +\n";
-        	        	insert_sentence_up += ", \" +\n";
-        	        	insert_sentence_down += " + \",\" +\n";
+        	        	output += columnName;
         	        }
         	        
-        	        select_sentence += "        \"    ";
-        	        update_sentence += "            \"    ";
-        	        insert_sentence_up += "            \"    ";
-        	        insert_sentence_down += "            \"    ";
-        	        output += "    ";
-
-        	        switch(column.getDataType()) {
-        	        	case java.sql.Types.BIGINT:
-        	        		java_type = "Long";
-        	        		function_type = "Long";
-        	        		break;
-        	        	case java.sql.Types.INTEGER:
-        	        		java_type = "Integer";
-        	        		function_type = "Int";
-        	        		break;
-        	        	case java.sql.Types.SMALLINT:
-        	        		java_type = "Short";
-        	        		function_type = "Short";
-        	        		break;
-        	        	case java.sql.Types.TINYINT:
-        	        		java_type = "Byte";
-        	        		function_type = "Byte";
-         	        		break;
-        	        	case java.sql.Types.CHAR:
-        	        	case java.sql.Types.VARCHAR:
-        	        	case java.sql.Types.LONGVARCHAR:
-        	        		java_type = "String";
-        	        		function_type = "String";
-        	        		delta_update_sentence = columnName + " = \" + (_" + columnName + " != null ? \"'\" + _" + columnName + " + \"'\" : \"null\") + \",\" +\n";
-        	        		delta_insert_sentence_down = "\" + (_" + columnName + " != null ? \"'\" + _" + columnName + " + \"'\" : \"null\")";
-        	        		break;
-        	        	case java.sql.Types.DATE:
-        	        	case java.sql.Types.TIMESTAMP:
-        	        		java_type = "String";
-        	        		function_type = "String";
-        	        		delta_select_sentence = "DATE_FORMAT(" + tableShortAlias + "." + columnName + ", '%d-%m-%Y %H:%i:%s') AS " + columnName;
-        	        		delta_update_sentence = columnName + " = \" + (_" + columnName + " != null ? \"STR_TO_DATE(\" + _" + columnName + " + \", '%d-%m-%Y %H:%i:%s')\" : \"null\")";
-        	        		delta_insert_sentence_down = "\" + (_" + columnName + " != null ? \"STR_TO_DATE(\" + _" + columnName + " + \", '%d-%m-%Y %H:%i:%s')\" : \"null\")";
-        	        		break;
-        	        	case java.sql.Types.BIT:
-        	        		java_type = "Boolean";
-        	        		function_type = "Boolean";
-        	        		delta_select_sentence = "0+" + columnName + " AS " + columnName;
-        	        		delta_update_sentence = columnName + " = \" + (_" + columnName + " != null ? \"b'\" + _" + columnName + " : \"null\") + \",\" +\n";
-        	        		delta_insert_sentence_down = "\" + (_" + columnName + " != null ? \"b'\" + (_" + columnName + " ? 1 : 0) + \"'\" : \"null\")";
-        	        		break;
-        	        	case java.sql.Types.DECIMAL:
-        	        		java_type = "Decimal";
-        	        		function_type = "Decimal";
-        	        		break;
-        	        	case java.sql.Types.DOUBLE:
-        	        		java_type = "Double";
-        	        		function_type = "Double";
-        	        		break;
-        	        	case java.sql.Types.FLOAT:
-        	        		java_type = "Float";
-        	        		function_type = "Float";
-        	        		break;
-        	        	default:
-        	        		throw new Exception("Typo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + columnName);
-        	        } // end switch
-        	        
-        	        select_sentence += delta_select_sentence;
-        	        
-        	        update_sentence += delta_select_sentence;
-        	        
-        	        insert_sentence_up += delta_insert_sentence_up;
-        	        
-        	        insert_sentence_down += delta_insert_sentence_down;
+        	        output += " = obj.get_";
         	        
         	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
-        	        	output += "private " + java_type + " _id;\n";
+        	        	output += "id";
         	        }
         	        else {
-        	        	output += "private " + java_type + " _" + columnName + ";\n";
-        	        }
-        	        
-        	        
-        	        fromrs += "            ret.set_" + columnName + "(p_rs.get" + function_type + "(\"" + columnName + "\"));\n";
-        	                	        
-        	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
-        	        	constructor_assignment += "        _id = null;\n";
-        	        }
-        	        else {
-        	        	constructor_assignment += "        _" + columnName + " = null;\n";
-        	        }
-        	        
-        	                	        
-        	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
-
-            	        getters +=
-                	        	"    public " + java_type + " get_id() {\n" +
-                	        	"        return _id;\n" +
-                	        	"    }\n";
-        	        }
-        	        else {
-        	        	
-            	        getters +=
-                	        	"    public " + java_type + " get_" + columnName + "() {\n" +
-                	        	"        return _" + columnName + ";\n" +
-                	        	"    }\n";
+        	        	output += columnName;
         	        }
 
-        	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
-        	        
-            	        setters +=
-                	        	"    public void set_id(" + java_type + " _id) {\n" +
-                	        	"        this._id = _id;\n" +
-                	        	"    }\n";
-        	        }
-        	        else {
-        	        	
-            	        setters +=
-                	        	"    public void set_" + columnName + "(" + java_type + " _" + columnName + ") {\n" +
-                	        	"        this._" + columnName + " = _" + columnName + ";\n" +
-                	        	"    }\n";
-        	        }
-        	        
-        	    } // end while column
+        	        output += 
+        	        	"();\n";
 
-    	        if (!select_sentence.equals("")) {
-    	        	select_sentence += " \" +\n";
-    	        	update_sentence += " \" +\n";
-    	        	insert_sentence_up += " \" +\n";
-    	        	insert_sentence_down += " +\n";
-    	        }
-    	        
-    	        fromrs +=
-    	        	"        }\n" +
-		            "        catch (SQLException ex){\n" +
-		            "            // handle any errors\n" +
-		            "            System.out.println(\"SQLException: \" + ex.getMessage());\n" +
-		            "            System.out.println(\"SQLState: \" + ex.getSQLState());\n" +
-		            "            System.out.println(\"VendorError: \" + ex.getErrorCode());\n" +
-                    "\n" +			
-		            "            throw ex;\n" +
-		            "        }\n" +
-                    "\n" +			
-		            "        return ret;\n" +
-		            "    }\n";
+        	    }
+        	    
+    	        output +=
+    	            "            }\n" +
+    	            "        }\n" +
+    	            "        catch (SQLException ex){\n" +
+    	            "            // handle any errors\n" +
+    	            "            System.out.println(\"SQLException: \" + ex.getMessage() + \" sentencia: \" + str_sql);\n" +
+    	            "            System.out.println(\"SQLState: \" + ex.getSQLState());\n" +
+    	            "            System.out.println(\"VendorError: \" + ex.getErrorCode());\n" +
+    	            "            \n" +
+    	            "            throw ex;\n" +
+    	            "        }\n" +
+    	            "        finally {\n" +
+    	            "            // it is a good idea to release\n" +
+    	            "            // resources in a finally{} block\n" +
+    	            "            // in reverse-order of their creation\n" +
+    	            "            // if they are no-longer needed\n" +
+    	            "            if (rs != null) {\n" +
+    	            "                try {\n" +
+    	            "                    rs.close();\n" +
+    	            "                } catch (SQLException sqlEx) { \n" +
+    	            "                    \n" +
+    	            "                } // ignore\n" +
+    	            "                rs = null;\n" +
+    	            "            }\n" +
+    	            "            if (stmt != null) {\n" +
+    	            "                try {\n" +
+    	            "                    stmt.close();\n" +
+    	            "                } catch (SQLException sqlEx) {\n" +
+    	            "                    \n" +
+    	            "                } // ignore\n" +
+    	            "                stmt = null;\n" +
+    	            "            }\n" +
+    	            "        }        \n" +
+    	            "        \n" +
+    	            "    }\n" +
+    	            "\n";
 
-    	        output += 
-    	        	"\n" +
-    	        	"    private final static String _str_sql = \n" +
-		            "        \"    SELECT \" +\n" + select_sentence +
-		            "        \"    FROM " + tableName + " " + tableShortAlias + " \";\n";
-    	        
+    	        // fin load
+
+        	    // toString
+        	    
     	        output +=
     	        	"\n" +
-    	        	"    public " + className + "() {\n" + constructor_assignment + "\n    }\n";
+    	            "@Override\n" +
+    	            "    public String toString() {\n" +
+    	            "        return \"" + className + " [\" +";
     	        
-    	        output += "\n" + getters;
+    	        bFirst = false;
     	        
-    	        output += "\n" + setters;
-		            
-    	        output += "\n" + fromrs;
-    	        */
+        	    for (Map.Entry<String, Column> entry : mapColumns.entrySet()) {
+        	    	
+        	        String columnName = entry.getKey();
+        	        Column column = entry.getValue();
+        	        
+        	        if (!bFirst) {
+        	        	bFirst = true;
+        	        }
+        	        else {
+        	        	output += " + \",\" +";
+        	        }
+        	        
+        	        output += "\n	           \"    _";
+        	        
+        	        switch(column.getDataType()) {
+	    	        	case java.sql.Types.BIGINT:
+	    	        	case java.sql.Types.INTEGER:
+	    	        	case java.sql.Types.SMALLINT:
+	    	        	case java.sql.Types.TINYINT:
+	    	        	case java.sql.Types.DECIMAL:
+	    	        	case java.sql.Types.DOUBLE:
+	    	        	case java.sql.Types.FLOAT:
+
+	            	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+	            	        	output += "id";
+	            	        }
+	            	        else {
+	            	        	output += columnName;
+	            	        }
+	            	        
+	            	        output += " = \" + (_";
+	            	        
+	            	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+	            	        	output += "id";
+	            	        }
+	            	        else {
+	            	        	output += columnName;
+	            	        }
+	            	        
+	            	        output += " != null ? _";
+	            	        
+	            	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+	            	        	output += "id";
+	            	        }
+	            	        else {
+	            	        	output += columnName;
+	            	        }
+	            	        
+	            	        output += " : \"null\")";
+	            	        
+	    	        		break;
+	    	        	case java.sql.Types.CHAR:
+	    	        	case java.sql.Types.VARCHAR:
+	    	        	case java.sql.Types.LONGVARCHAR:
+	    	        		output += columnName + " = \" + (_" + columnName + " != null ? \"'\" + _" + columnName + " + \"'\" : \"null\")";	    	        		break;
+	    	        	case java.sql.Types.DATE:
+	    	        	case java.sql.Types.TIMESTAMP:
+	    	        		output += columnName + " = \" + (_" + columnName + " != null ? \"STR_TO_DATE(\" + _" + columnName + " + \", '%d-%m-%Y %H:%i:%s')\" : \"null\")";
+	    	        		break;
+	    	        	case java.sql.Types.BIT:
+	    	        		output += columnName + " = \" + (_" + columnName + " != null ? \"b'\" + _" + columnName + " : \"null\")";
+	    	        		break;
+	    	        	default:
+	    	        		throw new Exception("Tipo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + columnName);
+        	        } // end switch
+        	        
+        	    }
+    	        
+    	        output +=
+    	        	" +" +
+    	            "\n			   \"]\";" +
+    	            "\n" +
+    	            "    }\n" +
+    	            "\n";
+
+    	        // fin toString
+    	        
+        	    // toJSON
+        	    
+    	        output +=
+        	        	"\n" +
+        	            "    public String toJSON() {\n" +
+        	            "        return \"" + className + " : {\" +";
+        	        
+    	        bFirst = false;
+    	        
+        	    for (Map.Entry<String, Column> entry : mapColumns.entrySet()) {
+        	    	
+        	        String columnName = entry.getKey();
+        	        Column column = entry.getValue();
+        	        
+        	        if (!bFirst) {
+        	        	bFirst = true;
+        	        }
+        	        else {
+        	        	output += " + \",\" +";
+        	        }
+        	        
+        	        output += "\n	           \"    \\\"_";
+        	        
+        	        switch(column.getDataType()) {
+	    	        	case java.sql.Types.BIGINT:
+	    	        	case java.sql.Types.INTEGER:
+	    	        	case java.sql.Types.SMALLINT:
+	    	        	case java.sql.Types.TINYINT:
+	    	        	case java.sql.Types.DECIMAL:
+	    	        	case java.sql.Types.DOUBLE:
+	    	        	case java.sql.Types.FLOAT:
+
+	            	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+	            	        	output += "id";
+	            	        }
+	            	        else {
+	            	        	output += columnName;
+	            	        }
+	            	        
+	            	        output += "\\\" : \" + (_";
+	            	        
+	            	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+	            	        	output += "id";
+	            	        }
+	            	        else {
+	            	        	output += columnName;
+	            	        }
+	            	        
+	            	        output += " != null ? _";
+	            	        
+	            	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+	            	        	output += "id";
+	            	        }
+	            	        else {
+	            	        	output += columnName;
+	            	        }
+	            	        
+	            	        output += " : \"null\")";
+	            	        
+	    	        		break;
+	    	        	case java.sql.Types.CHAR:
+	    	        	case java.sql.Types.VARCHAR:
+	    	        	case java.sql.Types.LONGVARCHAR:
+	    	        	case java.sql.Types.DATE:
+	    	        	case java.sql.Types.TIMESTAMP:
+	    	        		output += columnName + "\\\" : \" + (_" + columnName + " != null ? \"\"\" + _" + columnName + " + \"\"\" : \"null\")";	    	        		break;
+	    	        	case java.sql.Types.BIT:
+	    	        		output += columnName + "\\\" : \" + (_" + columnName + " != null ? \"b'\" + _" + columnName + " : \"null\")";
+	    	        		break;
+	    	        	default:
+	    	        		throw new Exception("Tipo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + columnName);
+        	        } // end switch
+        	        
+        	    }
+    	        
+    	        output +=
+    	        	" +" +
+    	            "\n			   \"}\";" +
+    	            "\n" +
+    	            "    }\n" +
+    	            "\n";
+
+    	        // fin toJSON
+    	        
+    	        // fin clase
+    	        
+    	        output +=  
+    	        	"}\n";    	        	
+
+    	        
+    	        //System.out.println(output);
+    	        
+    	        writeToFile(System.getProperty("output_dir") + "/" + className + ".java", output);
     	        
     	        
-    	        System.out.println(output);
         	} // end while rs (tabla)
 
         	
@@ -1341,4 +1427,57 @@ public class MyORM {
         }
 	}
 
+	private static String buildWhereSentence(
+		Map<String, Column> p_mapColumns,
+		Map<String, PrimaryKey> p_mapPrimaryKeys,
+		Map<Integer, String> p_mapJavaTypes
+	) 
+	{
+		String res = "";
+		Boolean bFirst = false;
+		
+	    for (Map.Entry<String, PrimaryKey> entry : p_mapPrimaryKeys.entrySet()) {
+	    	
+	        String columnName = entry.getKey();
+	        PrimaryKey pk = entry.getValue();
+	        
+	        if (!bFirst) {
+	        	bFirst = true;
+	        }
+	        else {
+	        	res += " + \" AND\" +\n";
+	        }
+
+	        res += "            \"    " + columnName + " = \" + " + p_mapJavaTypes.get(p_mapColumns.get(columnName).getDataType()) + ".toString(this._";
+	        
+	        if (p_mapPrimaryKeys.size() == 1) {
+	        	res += "id";
+	        }
+	        else {
+	        	res += columnName;
+	        }
+	        
+	        res += ")";
+
+	    }
+		
+	    return res;
+	}
+	
+	private static void writeToFile(String p_fileName, String p_content) throws IOException {
+		 
+		File file = new File(p_fileName);
+
+		// if file doesnt exists, then create it
+		if (!file.exists()) {
+			file.createNewFile();
+		}
+
+		FileWriter fw = new FileWriter(file.getAbsoluteFile());
+		BufferedWriter bw = new BufferedWriter(fw);
+		bw.write(p_content);
+		bw.close();
+
+		System.out.println("Done");
+	}
 }

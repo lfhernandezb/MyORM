@@ -24,6 +24,7 @@ $JAVA_HOME/bin/java \
 -Dlog4j.configuration=file:$PROGRAM_PATH/../etc/log4j.xml \
 -Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.Log4JLogger \
 -Dconfig_file=$PROGRAM_PATH/../etc/config.ini \
+-Doutput_dir=$PROGRAM_PATH/../output \
 -cp `cygpath -wp $CLASSPATH` \
 MyORM
 
