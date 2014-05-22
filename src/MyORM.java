@@ -11,6 +11,7 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.text.WordUtils;
 import org.apache.log4j.Logger;
 import org.ini4j.Wini;
 
@@ -171,8 +172,8 @@ public class MyORM {
         	    	mapForeignKeys.put(columnName, ForeignKey.fromRS(rsImportedKeys));
         	    }
 
-        	    String className = "";
-        	    
+        	    String className = toJavaClassName(tableName);
+        	    /*
         	    int pos = tableName.indexOf("_");
         	    
         	    if (pos != -1) {
@@ -182,6 +183,7 @@ public class MyORM {
         	    else {
         	    	className = tableName.substring(0, 1).toUpperCase() + tableName.substring(1);
         	    }
+        	    */
         	    
         	    String tableShortAlias = tableName.substring(0, 2);
         	    
@@ -197,6 +199,8 @@ public class MyORM {
 					"import java.sql.Statement;\n" +
 					"import java.util.AbstractMap;\n" +
 					"import java.util.ArrayList;\n" +
+					"import org.w3c.dom.Element;\n" +
+					"import org.w3c.dom.Node;\n" +
 					"\n" +
 					"/**\n" +
 					" * @author petete-ntbk\n" +
@@ -211,13 +215,15 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        output += "private " + mapJavaTypes.get(column.getDataType()) + " _";
+        	        String memberName = toJavaFieldName(columnName);
+        	        
+        	        output += "    protected " + mapJavaTypes.get(column.getDataType()) + " _";
 
         	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
         	        	output += "id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += memberName;
         	        }
         	        
         	        output += ";\n";
@@ -261,7 +267,7 @@ public class MyORM {
 	    	        		break;
 	    	        	case java.sql.Types.DATE:
 	    	        	case java.sql.Types.TIMESTAMP:
-	    	        		output += "DATE_FORMAT(" + tableShortAlias + "." + columnName + ", '%d-%m-%Y %H:%i:%s')";
+	    	        		output += "DATE_FORMAT(" + tableShortAlias + "." + columnName + ", '%Y-%m-%d %H:%i:%s')";
 	    	        		break;
 	    	        	case java.sql.Types.BIT:
 	    	        		output += "0+" + tableShortAlias + "." + columnName;
@@ -296,6 +302,7 @@ public class MyORM {
         	    	
         	        String columnName = entry.getKey();
         	        //Column column = entry.getValue();
+        	        String memberName = toJavaFieldName(columnName);
         	        
         	        output += "        _";
         	        
@@ -303,7 +310,7 @@ public class MyORM {
         	        	output += "id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += memberName;
         	        }
         	        
         	        output += " = null;\n";
@@ -321,6 +328,8 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
+        	        String memberName = toJavaFieldName(columnName);
+        	        
         	        output +=
         	        	"    /**\n" +
         	        	"     * @return the _";
@@ -329,19 +338,19 @@ public class MyORM {
         	        	output += "id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += memberName;
         	        }
         	        
         	        output +=
         	            "\n" +
         	        	"     */\n" +
-        	        	"    public " + mapJavaTypes.get(column.getDataType()) + " get_";
+        	        	"    public " + mapJavaTypes.get(column.getDataType()) + " get";
         	        
         	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
-        	        	output += "id";
+        	        	output += "Id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += WordUtils.capitalize(memberName);
         	        }
         	        
         	        output +=
@@ -352,7 +361,7 @@ public class MyORM {
         	        	output += "id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += memberName;
         	        }
         	        
         	        output +=
@@ -370,6 +379,8 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
+        	        String memberName = toJavaFieldName(columnName);
+        	        
         	        output +=
             	        	"    /**\n" +
             	    	        	"     * @param _";
@@ -378,7 +389,7 @@ public class MyORM {
         	        	output += "id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += memberName;
         	        }
         	        
         	        output +=
@@ -388,19 +399,19 @@ public class MyORM {
         	        	output += "id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += memberName;
         	        }
         	        
         	        output +=
         	            " to set\n" +
 	    	        	"     */\n" +
-	    	        	"    public void set_";
+	    	        	"    public void set";
         	        
         	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
-        	        	output += "id";
+        	        	output += "Id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += WordUtils.capitalize(memberName);
         	        }
         	        
         	        output +=
@@ -410,7 +421,7 @@ public class MyORM {
         	        	output += "id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += memberName;
         	        }
         	        
         	        output +=
@@ -421,7 +432,7 @@ public class MyORM {
         	        	output += "id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += memberName;
         	        }
         	        
         	        output +=
@@ -431,7 +442,7 @@ public class MyORM {
         	        	output += "id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += memberName;
         	        }
         	        
         	        output +=
@@ -454,14 +465,16 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
+        	        String memberName = toJavaFieldName(columnName);
+        	        
         	        output += 
-        	        	"        ret.set_"; 
+        	        	"        ret.set"; 
         	        
         	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
-        	        	output += "id";
+        	        	output += "Id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += WordUtils.capitalize(memberName);
         	        }
         	        
         	        output += "(p_rs.get" + mapFunctionTypes.get(column.getDataType()) + "(\"";
@@ -564,6 +577,8 @@ public class MyORM {
     	        }
 
     	        // fin getById
+    	        
+    	        // seek
         	    
     	        output +=
         	        	"    \n" +
@@ -641,9 +656,35 @@ public class MyORM {
         	        
         	        output += 
             	        	"if (p.getKey().equals(\"mas reciente\")) {\n" +
-                    	    "                    array_clauses.add(\"" + tableShortAlias + ".fecha_modificacion > STR_TO_DATE('\" + p.getValue() + \"', '%d-%m-%Y %H:%i:%s')\");\n" +
+                    	    "                    array_clauses.add(\"" + tableShortAlias + ".fecha_modificacion > STR_TO_DATE(\" + p.getValue() + \", '%Y-%m-%d %H:%i:%s')\");\n" +
                     	    "                }\n";
 
+        	    }
+
+        	    if (mapColumns.containsKey("borrado")) {
+        	    	
+        	        output += "                ";
+        	        
+        	        if (!bFirst) {
+        	        	bFirst = true;
+        	        }
+        	        else {
+        	        	output += "else ";
+        	        }
+        	        
+        	        output += 
+            	        	"if (p.getKey().equals(\"no borrado\")) {\n" +
+                    	    "                    array_clauses.add(\"" + tableShortAlias + ".borrado = 0\");\n" +
+                    	    "                }\n";
+
+        	        output += "                ";
+        	        
+        	        output += "else ";
+        	        
+        	        output += 
+            	        	"if (p.getKey().equals(\"borrado\")) {\n" +
+                    	    "                    array_clauses.add(\"" + tableShortAlias + ".borrado = 1\");\n" +
+                    	    "                }\n";
         	    }
 
         	    output +=
@@ -726,7 +767,9 @@ public class MyORM {
     	        	"    }\n" +
     	        	"\n";
         	    
+        	    // fin seek
         	    
+        	    // update
         	        
         	    output +=
     	        	"    public int update(Connection p_conn) throws SQLException {\n" +
@@ -744,6 +787,8 @@ public class MyORM {
         	    	
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
+        	        
+        	        String memberName = toJavaFieldName(columnName);
         	        
         	        // no se actualizan las llaves primarias
         	        if (mapPrimaryKeys.containsKey(columnName)) {
@@ -772,21 +817,21 @@ public class MyORM {
 	    	        	case java.sql.Types.DECIMAL:
 	    	        	case java.sql.Types.DOUBLE:
 	    	        	case java.sql.Types.FLOAT:
-	    	        		output += columnName + " = \" + (_" + columnName + " != null ? _" + columnName + " : \"null\")";
+	    	        		output += columnName + " = \" + (_" + memberName + " != null ? _" + memberName + " : \"null\")";
 	    	        		break;
 	    	        	case java.sql.Types.CHAR:
 	    	        	case java.sql.Types.VARCHAR:
 	    	        	case java.sql.Types.LONGVARCHAR:
-	    	        		output += columnName + " = \" + (_" + columnName + " != null ? \"'\" + _" + columnName + " + \"'\" : \"null\")";	    	        		break;
+	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"'\" + _" + memberName + " + \"'\" : \"null\")";	    	        		break;
 	    	        	case java.sql.Types.DATE:
 	    	        	case java.sql.Types.TIMESTAMP:
-	    	        		output += columnName + " = \" + (_" + columnName + " != null ? \"STR_TO_DATE(\" + _" + columnName + " + \", '%d-%m-%Y %H:%i:%s')\" : \"null\")";
+	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"STR_TO_DATE(\" + _" + memberName + " + \", '%Y-%m-%d %H:%i:%s')\" : \"null\")";
 	    	        		break;
 	    	        	case java.sql.Types.BIT:
-	    	        		output += columnName + " = \" + (_" + columnName + " != null ? \"b'\" + _" + columnName + " : \"null\")";
+	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"b'\" + _" + memberName + " : \"null\")";
 	    	        		break;
 	    	        	default:
-	    	        		throw new Exception("Tipo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + columnName);
+	    	        		throw new Exception("Tipo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + memberName);
         	        } // end switch
         	        
         	    }
@@ -840,6 +885,8 @@ public class MyORM {
     	        	"        return ret;\n" +
     	        	"    }\n" +
     	        	"    \n";
+        	    
+        	    // fin update
     	        
         	    // insert
     	        	
@@ -860,6 +907,8 @@ public class MyORM {
         	    	
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
+        	        
+        	        String memberName = toJavaFieldName(columnName);
         	        
         	        // no se insertan las llaves primarias autoincrementales
         	        if (mapPrimaryKeys.containsKey(columnName) && column.getIsAutoincrement() == "YES") {
@@ -894,6 +943,8 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
+        	        String memberName = toJavaFieldName(columnName);
+        	        
         	        // no se insertan las llaves primarias autoincrementales
         	        if (mapPrimaryKeys.containsKey(columnName) && column.getIsAutoincrement() == "YES") {
         	        	continue;
@@ -927,7 +978,7 @@ public class MyORM {
 	            	        	output += "id";
 	            	        }
 	            	        else {
-	            	        	output += columnName;
+	            	        	output += memberName;
 	            	        }
 	            	        
 	            	        output += " != null ? \"'\" + _";
@@ -936,7 +987,7 @@ public class MyORM {
 	            	        	output += "id";
 	            	        }
 	            	        else {
-	            	        	output += columnName;
+	            	        	output += memberName;
 	            	        }
 	            	        
 	            	        output += " + \"'\" : \"null\")";
@@ -945,14 +996,14 @@ public class MyORM {
 	    	        	case java.sql.Types.CHAR:
 	    	        	case java.sql.Types.VARCHAR:
 	    	        	case java.sql.Types.LONGVARCHAR:
-	    	        		output += "\" + (_" + columnName + " != null ? \"'\" + _" + columnName + " + \"'\" : \"null\")";
+	    	        		output += "\" + (_" + memberName + " != null ? \"'\" + _" + memberName + " + \"'\" : \"null\")";
 	    	        		break;
 	    	        	case java.sql.Types.DATE:
 	    	        	case java.sql.Types.TIMESTAMP:
-	    	        		output += "\" + (_" + columnName + " != null ? \"STR_TO_DATE(\" + _" + columnName + " + \", '%d-%m-%Y %H:%i:%s')\" : \"null\")";
+	    	        		output += "\" + (_" + memberName + " != null ? \"STR_TO_DATE(\" + _" + memberName + " + \", '%Y-%m-%d %H:%i:%s')\" : \"null\")";
 	    	        		break;
 	    	        	case java.sql.Types.BIT:
-	    	        		output += "\" + (_" + columnName + " != null ? \"b'\" + (_" + columnName + " ? 1 : 0) + \"'\" : \"null\")";
+	    	        		output += "\" + (_" + memberName + " != null ? \"b'\" + (_" + memberName + " ? 1 : 0) + \"'\" : \"null\")";
 	    	        		break;
 	    	        	default:
 	    	        		throw new Exception("Tipo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + columnName);
@@ -1145,6 +1196,8 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
+        	        String memberName = toJavaFieldName(columnName);
+        	        
         	        // no se cargan las llaves primarias
         	        if (mapPrimaryKeys.containsKey(columnName)) {
         	        	continue;
@@ -1157,16 +1210,16 @@ public class MyORM {
         	        	output += "id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += memberName;
         	        }
         	        
-        	        output += " = obj.get_";
+        	        output += " = obj.get";
         	        
         	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
-        	        	output += "id";
+        	        	output += "Id";
         	        }
         	        else {
-        	        	output += columnName;
+        	        	output += WordUtils.capitalize(memberName);
         	        }
 
         	        output += 
@@ -1208,16 +1261,98 @@ public class MyORM {
     	            "            }\n" +
     	            "        }        \n" +
     	            "        \n" +
-    	            "    }\n" +
-    	            "\n";
+    	            "    }\n";
 
     	        // fin load
 
-        	    // toString
+        	    // save
         	    
     	        output +=
     	        	"\n" +
-    	            "@Override\n" +
+    	            "    public void save(Connection p_conn) throws SQLException {\n" +
+    	            "        \n" +
+    	            "        String str_sql = _str_sql +\n" +
+    	            "            \"    WHERE\" +\n";
+    	        
+    	        output += buildWhereSentence(mapColumns, mapPrimaryKeys, mapJavaTypes);
+    	        
+    	        output += 
+    	        	" +\n" +
+    	            "            \"    LIMIT 0, 1\";\n" +
+    	            "        \n" +
+    	            "        //System.out.println(str_sql);\n" +
+    	            "        \n" +
+    	            "        // assume that conn is an already created JDBC connection (see previous examples)\n" +
+    	            "        Statement stmt = null;\n" +
+    	            "        ResultSet rs = null;\n" +
+    	            "        Boolean exists = false;\n" +
+    	            "        \n" +
+    	            "        try {\n" +
+    	            "            stmt = p_conn.createStatement();\n" +
+    	            "            //System.out.println(\"stmt = p_conn.createStatement() ok\");\n" +
+    	            "            rs = stmt.executeQuery(str_sql);\n" +
+    	            "            //System.out.println(\"rs = stmt.executeQuery(str_sql) ok\");\n" +
+    	            "\n" +
+    	            "            // Now do something with the ResultSet ....\n" +
+    	            "\n" +
+    	            "            if (rs.next()) {\n" +
+    	            "                // registro existe\n" +
+    	            "                exists = true;\n" +
+    	            "            }\n" +
+    	            "\n" +
+    	            "            rs.close();" +
+    	            "\n" +
+    	            "            stmt.close();\n" +
+    	            "\n" +
+    	            "            if (exists) {\n" +
+    	            "            	// update\n" +
+    	            "            	update(p_conn);\n" +
+    	            "            }\n" +
+    	            "            else {\n" +
+    	            "            	// insert\n" +
+    	            "            	insert(p_conn);\n" +
+    	            "            }\n" +
+    	            "        }\n" +
+    	            "        catch (SQLException ex){\n" +
+    	            "            // handle any errors\n" +
+    	            "            System.out.println(\"SQLException: \" + ex.getMessage() + \" sentencia: \" + str_sql);\n" +
+    	            "            System.out.println(\"SQLState: \" + ex.getSQLState());\n" +
+    	            "            System.out.println(\"VendorError: \" + ex.getErrorCode());\n" +
+    	            "            \n" +
+    	            "            throw ex;\n" +
+    	            "        }\n" +
+    	            "        finally {\n" +
+    	            "            // it is a good idea to release\n" +
+    	            "            // resources in a finally{} block\n" +
+    	            "            // in reverse-order of their creation\n" +
+    	            "            // if they are no-longer needed\n" +
+    	            "            if (rs != null) {\n" +
+    	            "                try {\n" +
+    	            "                    rs.close();\n" +
+    	            "                } catch (SQLException sqlEx) { \n" +
+    	            "                    \n" +
+    	            "                } // ignore\n" +
+    	            "                rs = null;\n" +
+    	            "            }\n" +
+    	            "            if (stmt != null) {\n" +
+    	            "                try {\n" +
+    	            "                    stmt.close();\n" +
+    	            "                } catch (SQLException sqlEx) {\n" +
+    	            "                    \n" +
+    	            "                } // ignore\n" +
+    	            "                stmt = null;\n" +
+    	            "            }\n" +
+    	            "        }        \n" +
+    	            "        \n" +
+    	            "    }\n";
+
+    	        // fin save
+
+    	        // toString
+        	    
+    	        output +=
+    	        	"\n" +
+    	            "    @Override\n" +
     	            "    public String toString() {\n" +
     	            "        return \"" + className + " [\" +";
     	        
@@ -1227,6 +1362,8 @@ public class MyORM {
         	    	
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
+        	        
+        	        String memberName = toJavaFieldName(columnName);
         	        
         	        if (!bFirst) {
         	        	bFirst = true;
@@ -1250,7 +1387,7 @@ public class MyORM {
 	            	        	output += "id";
 	            	        }
 	            	        else {
-	            	        	output += columnName;
+	            	        	output += memberName;
 	            	        }
 	            	        
 	            	        output += " = \" + (_";
@@ -1259,7 +1396,7 @@ public class MyORM {
 	            	        	output += "id";
 	            	        }
 	            	        else {
-	            	        	output += columnName;
+	            	        	output += memberName;
 	            	        }
 	            	        
 	            	        output += " != null ? _";
@@ -1268,7 +1405,7 @@ public class MyORM {
 	            	        	output += "id";
 	            	        }
 	            	        else {
-	            	        	output += columnName;
+	            	        	output += memberName;
 	            	        }
 	            	        
 	            	        output += " : \"null\")";
@@ -1277,13 +1414,13 @@ public class MyORM {
 	    	        	case java.sql.Types.CHAR:
 	    	        	case java.sql.Types.VARCHAR:
 	    	        	case java.sql.Types.LONGVARCHAR:
-	    	        		output += columnName + " = \" + (_" + columnName + " != null ? \"'\" + _" + columnName + " + \"'\" : \"null\")";	    	        		break;
+	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"'\" + _" + memberName + " + \"'\" : \"null\")";	    	        		break;
 	    	        	case java.sql.Types.DATE:
 	    	        	case java.sql.Types.TIMESTAMP:
-	    	        		output += columnName + " = \" + (_" + columnName + " != null ? \"STR_TO_DATE(\" + _" + columnName + " + \", '%d-%m-%Y %H:%i:%s')\" : \"null\")";
+	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"STR_TO_DATE(\" + _" + memberName + " + \", '%Y-%m-%d %H:%i:%s')\" : \"null\")";
 	    	        		break;
 	    	        	case java.sql.Types.BIT:
-	    	        		output += columnName + " = \" + (_" + columnName + " != null ? \"b'\" + _" + columnName + " : \"null\")";
+	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"b'\" + _" + memberName + " : \"null\")";
 	    	        		break;
 	    	        	default:
 	    	        		throw new Exception("Tipo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + columnName);
@@ -1314,6 +1451,8 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
+        	        String memberName = toJavaFieldName(columnName);
+        	        
         	        if (!bFirst) {
         	        	bFirst = true;
         	        }
@@ -1336,7 +1475,7 @@ public class MyORM {
 	            	        	output += "id";
 	            	        }
 	            	        else {
-	            	        	output += columnName;
+	            	        	output += memberName;
 	            	        }
 	            	        
 	            	        output += "\\\" : \" + (_";
@@ -1345,7 +1484,7 @@ public class MyORM {
 	            	        	output += "id";
 	            	        }
 	            	        else {
-	            	        	output += columnName;
+	            	        	output += memberName;
 	            	        }
 	            	        
 	            	        output += " != null ? _";
@@ -1354,7 +1493,7 @@ public class MyORM {
 	            	        	output += "id";
 	            	        }
 	            	        else {
-	            	        	output += columnName;
+	            	        	output += memberName;
 	            	        }
 	            	        
 	            	        output += " : \"null\")";
@@ -1365,9 +1504,9 @@ public class MyORM {
 	    	        	case java.sql.Types.LONGVARCHAR:
 	    	        	case java.sql.Types.DATE:
 	    	        	case java.sql.Types.TIMESTAMP:
-	    	        		output += columnName + "\\\" : \" + (_" + columnName + " != null ? \"\"\" + _" + columnName + " + \"\"\" : \"null\")";	    	        		break;
+	    	        		output += columnName + "\\\" : \" + (_" + memberName + " != null ? \"\\\"\" + _" + memberName + " + \"\\\"\" : \"null\")";	    	        		break;
 	    	        	case java.sql.Types.BIT:
-	    	        		output += columnName + "\\\" : \" + (_" + columnName + " != null ? \"b'\" + _" + columnName + " : \"null\")";
+	    	        		output += columnName + "\\\" : \" + (_" + memberName + " != null ? \"b'\" + _" + memberName + " : \"null\")";
 	    	        		break;
 	    	        	default:
 	    	        		throw new Exception("Tipo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + columnName);
@@ -1383,6 +1522,119 @@ public class MyORM {
     	            "\n";
 
     	        // fin toJSON
+    	        
+        	    // toXML
+        	    
+    	        output +=
+    	        	"\n" +
+    	            "    public String toXML() {\n" +
+    	            "        return \"<" + className + ">\" +";
+    	        
+        	    for (Map.Entry<String, Column> entry : mapColumns.entrySet()) {
+        	    	
+        	        String columnName = entry.getKey();
+        	        Column column = entry.getValue();
+        	        
+        	        String memberName = toJavaFieldName(columnName);
+        	                	        
+        	        output += "\n	           \"    <";
+        	        
+        	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+        	        	output += "id";
+        	        }
+        	        else {
+        	        	output += memberName;
+        	        }
+        	        
+        	        output += "\" + (_";
+        	        
+        	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+        	        	output += "id";
+        	        }
+        	        else {
+        	        	output += memberName;
+        	        }
+        	        
+        	        output += " != null ? \">\" + _";
+        	        
+        	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+        	        	output += "id";
+        	        }
+        	        else {
+        	        	output += memberName;
+        	        }
+        	        
+        	        output += " + \"</";
+        	        		
+        	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+        	        	output += "id";
+        	        }
+        	        else {
+        	        	output += memberName;
+        	        }
+        	        		
+        	        output += ">\" : \" xsi:nil=\\\"true\\\" xmlns:xsi=\\\"http://www.w3.org/2001/XMLSchema-instance\\\"/>\")" + " +";
+	            	        
+        	        
+        	    }
+    	        
+    	        output +=
+    	            "\n			   \"</" + className + ">\";" +
+    	            "\n" +
+    	            "    }\n" +
+    	            "\n";
+
+    	        // fin toXML
+    	        
+        	    // fromXMLNode
+        	    
+        	    output +=
+        	    	"\n" +
+					"    public static " + className + " fromXMLNode(Node xmlNode) {\n" +
+		            "        " + className + " ret = new " + className + "();\n\n" +
+					"        Element element = (Element) xmlNode;\n\n";
+
+        	    for (Map.Entry<String, Column> entry : mapColumns.entrySet()) {
+        	    	
+        	        String columnName = entry.getKey();
+        	        Column column = entry.getValue();
+        	        
+        	        String memberName = toJavaFieldName(columnName);
+        	        
+        	        output += 
+        	        	"        ret.set"; 
+        	        
+        	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
+        	        	output += "Id";
+        	        }
+        	        else {
+        	        	output += WordUtils.capitalize(memberName);
+        	        }
+        	        
+        	        output += "(";
+        	        
+        	        if (mapFunctionTypes.get(column.getDataType()).equals("String") ) {
+        	        	output += "element.getElementsByTagName(\"" + columnName + "\").item(0).getTextContent()";
+        	        }
+        	        else if (mapFunctionTypes.get(column.getDataType()).equals("Boolean") ) {
+        	        	output += mapJavaTypes.get(column.getDataType()) + ".valueOf(element.getElementsByTagName(\"" + columnName + "\").item(0).getTextContent())";
+        	        }
+        	        else {
+        	        	output += mapJavaTypes.get(column.getDataType()) + ".decode(element.getElementsByTagName(\"" + columnName + "\").item(0).getTextContent())";
+        	        }
+
+        	        output += 
+        	        	");\n";
+
+        	    }
+        	    
+        	    output +=
+                    "\n" +			
+		            "        return ret;\n" +
+		            "    }\n";
+
+        	           	    
+        	    // fin fromXMLNode
     	        
     	        // fin clase
     	        
@@ -1441,6 +1693,8 @@ public class MyORM {
 	        String columnName = entry.getKey();
 	        PrimaryKey pk = entry.getValue();
 	        
+	        String memberName = toJavaFieldName(columnName);
+	        
 	        if (!bFirst) {
 	        	bFirst = true;
 	        }
@@ -1454,7 +1708,7 @@ public class MyORM {
 	        	res += "id";
 	        }
 	        else {
-	        	res += columnName;
+	        	res += memberName;
 	        }
 	        
 	        res += ")";
@@ -1480,4 +1734,20 @@ public class MyORM {
 
 		System.out.println("Done");
 	}
+	
+	private static String toJavaFieldName(String name) { // "MY_COLUMN"
+	    String name0 = name.replace("_", " "); // to "MY COLUMN"
+	    name0 = WordUtils.capitalizeFully(name0); // to "My Column"
+	    name0 = name0.replace(" ", ""); // to "MyColumn"
+	    name0 = WordUtils.uncapitalize(name0); // to "myColumn"
+	    return name0;
+	}
+
+	private static String toJavaClassName(String name) { // "MY_TABLE"
+	    String name0 = name.replace("_", " "); // to "MY TABLE"
+	    name0 = WordUtils.capitalizeFully(name0); // to "My Table"
+	    name0 = name0.replace(" ", ""); // to "MyTable"
+	    return name0;
+	}
+
 }
