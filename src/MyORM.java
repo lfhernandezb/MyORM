@@ -51,8 +51,8 @@ public class MyORM {
 		Map<String, Column> mapColumns;
 		Map<String, PrimaryKey> mapPrimaryKeys;
 		Map<String, ForeignKey> mapForeignKeys;
-		Map<Integer, String> mapJavaTypes;
-		Map<Integer, String> mapFunctionTypes;
+		Map<String, String> mapJavaTypes;
+		Map<String, String> mapFunctionTypes;
 		
 		ResultSet rsColumns;
 		ResultSet rsPrimaryKeys;
@@ -100,36 +100,43 @@ public class MyORM {
     		mapColumns = new HashMap<String, Column>();
     		mapPrimaryKeys = new HashMap<String, PrimaryKey>();
     		mapForeignKeys = new HashMap<String, ForeignKey>();
-    		mapJavaTypes = new HashMap<Integer, String>();
-    		mapFunctionTypes = new HashMap<Integer, String>();
+    		mapJavaTypes = new HashMap<String, String>();
+    		mapFunctionTypes = new HashMap<String, String>();
     		
-    		mapJavaTypes.put(java.sql.Types.BIGINT, "Long");
-    		mapJavaTypes.put(java.sql.Types.INTEGER, "Integer");
-    		mapJavaTypes.put(java.sql.Types.SMALLINT, "Short");
-    		mapJavaTypes.put(java.sql.Types.TINYINT, "Byte");
-    		mapJavaTypes.put(java.sql.Types.CHAR, "String");
-    		mapJavaTypes.put(java.sql.Types.VARCHAR, "String");
-    		mapJavaTypes.put(java.sql.Types.LONGVARCHAR, "String");
-    		mapJavaTypes.put(java.sql.Types.DATE, "String");
-    		mapJavaTypes.put(java.sql.Types.TIMESTAMP, "String");
-    		mapJavaTypes.put(java.sql.Types.BIT, "Boolean");
-    		mapJavaTypes.put(java.sql.Types.DECIMAL, "Decimal");
-    		mapJavaTypes.put(java.sql.Types.DOUBLE, "Double");
-    		mapJavaTypes.put(java.sql.Types.FLOAT, "Float");
+    		mapJavaTypes.put("BIGINT", "Long");
+    		mapJavaTypes.put("INT", "Integer");
+    		mapJavaTypes.put("SMALLINT", "Short");
+    		mapJavaTypes.put("TINYINT", "Byte");
+    		mapJavaTypes.put("CHAR", "String");
+    		mapJavaTypes.put("VARCHAR", "String");
+    		mapJavaTypes.put("LONGVARCHAR", "String");
+    		mapJavaTypes.put("TEXT", "String");
+    		mapJavaTypes.put("DATE", "String");
+    		mapJavaTypes.put("DATETIME", "String");
+    		mapJavaTypes.put("TIMESTAMP", "String");
+    		mapJavaTypes.put("BIT", "Boolean");
+    		mapJavaTypes.put("BOOLEAN", "Boolean");
+    		mapJavaTypes.put("DECIMAL", "Decimal");
+    		mapJavaTypes.put("DOUBLE", "Double");
+    		mapJavaTypes.put("FLOAT", "Float");
     		
-    		mapFunctionTypes.put(java.sql.Types.BIGINT, "Long");
-    		mapFunctionTypes.put(java.sql.Types.INTEGER, "Int");
-    		mapFunctionTypes.put(java.sql.Types.SMALLINT, "Short");
-    		mapFunctionTypes.put(java.sql.Types.TINYINT, "Byte");
-    		mapFunctionTypes.put(java.sql.Types.CHAR, "String");
-    		mapFunctionTypes.put(java.sql.Types.VARCHAR, "String");
-    		mapFunctionTypes.put(java.sql.Types.LONGVARCHAR, "String");
-    		mapFunctionTypes.put(java.sql.Types.DATE, "String");
-    		mapFunctionTypes.put(java.sql.Types.TIMESTAMP, "String");
-    		mapFunctionTypes.put(java.sql.Types.BIT, "Boolean");
-    		mapFunctionTypes.put(java.sql.Types.DECIMAL, "Decimal");
-    		mapFunctionTypes.put(java.sql.Types.DOUBLE, "Double");
-    		mapFunctionTypes.put(java.sql.Types.FLOAT, "Float");
+    		// para RecordSet.get<type>()
+    		mapFunctionTypes.put("BIGINT", "Long");
+    		mapFunctionTypes.put("INT", "Int");
+    		mapFunctionTypes.put("SMALLINT", "Short");
+    		mapFunctionTypes.put("TINYINT", "Byte");
+    		mapFunctionTypes.put("CHAR", "String");
+    		mapFunctionTypes.put("VARCHAR", "String");
+    		mapFunctionTypes.put("LONGVARCHAR", "String");
+    		mapFunctionTypes.put("TEXT", "String");
+    		mapFunctionTypes.put("DATE", "String");
+    		mapFunctionTypes.put("DATETIME", "String");
+    		mapFunctionTypes.put("TIMESTAMP", "String");
+    		mapFunctionTypes.put("BIT", "Boolean");
+    		mapFunctionTypes.put("BOOLEAN", "Boolean");
+    		mapFunctionTypes.put("DECIMAL", "Decimal");
+    		mapFunctionTypes.put("DOUBLE", "Double");
+    		mapFunctionTypes.put("FLOAT", "Float");
         	
         	rs = databaseMetaData.getTables(catalog, schemaPattern, tableNamePattern, types );
 
@@ -156,6 +163,12 @@ public class MyORM {
         	    
         	    while(rsColumns.next()){
         	        String columnName = rsColumns.getString(4);
+        	        
+        	        /*
+        	        if (tableName.equals("vehiculo")) {
+        	        	logger.debug(Column.fromRS(rsColumns).toString());
+        	        }
+        	        */
         	        
         	        mapColumns.put(columnName, Column.fromRS(rsColumns));
         	    }
@@ -191,7 +204,7 @@ public class MyORM {
 	        	    "/**\n" +
 	           	    " * \n" +
 	                " */\n" +
-	           	    "package bd;\n" +
+	                "package " + System.getProperty("package_name") + ";\n" +
 	           	    "\n" +
 					"import java.sql.Connection;\n" +
 					"import java.sql.ResultSet;\n" +
@@ -217,7 +230,7 @@ public class MyORM {
         	        
         	        String memberName = toJavaFieldName(columnName);
         	        
-        	        output += "    protected " + mapJavaTypes.get(column.getDataType()) + " _";
+        	        output += "    protected " + mapJavaTypes.get(column.getBaseType()) + " _";
 
         	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
         	        	output += "id";
@@ -243,6 +256,11 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
+        	        
+        	        if (tableName.equals("usuario")) {
+        	        	logger.debug("column: " + columnName + " data type: " + column.getDataType());
+        	        }
+        	        
         	        if (!bFirst) {
         	        	bFirst = true;
         	        }
@@ -252,28 +270,30 @@ public class MyORM {
 
         	        output += "\n        \"    ";
         	        
-        	        switch(column.getDataType()) {
-	    	        	case java.sql.Types.BIGINT:
-	    	        	case java.sql.Types.INTEGER:
-	    	        	case java.sql.Types.SMALLINT:
-	    	        	case java.sql.Types.TINYINT:
-	    	        	case java.sql.Types.CHAR:
-	    	        	case java.sql.Types.VARCHAR:
-	    	        	case java.sql.Types.LONGVARCHAR:
-	    	        	case java.sql.Types.DECIMAL:
-	    	        	case java.sql.Types.DOUBLE:
-	    	        	case java.sql.Types.FLOAT:
+        	        switch(column.getBaseType()) {
+	    	        	case "BIGINT":
+	    	        	case "INT":
+	    	        	case "SMALLINT":
+	    	        	case "TINYINT":
+	    	        	case "CHAR":
+	    	        	case "VARCHAR":
+	    	        	case "LONGVARCHAR":
+	    	        	case "TEXT":
+	    	        	case "DECIMAL":
+	    	        	case "DOUBLE":
+	    	        	case "FLOAT":
 	    	        		output += tableShortAlias + "." + columnName;
 	    	        		break;
-	    	        	case java.sql.Types.DATE:
-	    	        	case java.sql.Types.TIMESTAMP:
+	    	        	case "DATE":
+	    	        	case "DATETIME":
+	    	        	case "TIMESTAMP":
 	    	        		output += "DATE_FORMAT(" + tableShortAlias + "." + columnName + ", '%Y-%m-%d %H:%i:%s')";
 	    	        		break;
-	    	        	case java.sql.Types.BIT:
+	    	        	case "BIT":
 	    	        		output += "0+" + tableShortAlias + "." + columnName;
 	    	        		break;
 	    	        	default:
-	    	        		throw new Exception("Tipo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + columnName);
+	    	        		throw new Exception("Tipo no soportado: " + column.getBaseType() + " columna: " + columnName);
         	        } // end switch
         	        
         	        output += " AS ";
@@ -344,7 +364,7 @@ public class MyORM {
         	        output +=
         	            "\n" +
         	        	"     */\n" +
-        	        	"    public " + mapJavaTypes.get(column.getDataType()) + " get";
+        	        	"    public " + mapJavaTypes.get(column.getBaseType()) + " get";
         	        
         	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
         	        	output += "Id";
@@ -415,7 +435,7 @@ public class MyORM {
         	        }
         	        
         	        output +=
-        	            "(" + mapJavaTypes.get(column.getDataType()) + " _";
+        	            "(" + mapJavaTypes.get(column.getBaseType()) + " _";
         	        
         	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
         	        	output += "id";
@@ -477,7 +497,7 @@ public class MyORM {
         	        	output += WordUtils.capitalize(memberName);
         	        }
         	        
-        	        output += "(p_rs.get" + mapFunctionTypes.get(column.getDataType()) + "(\"";
+        	        output += "(p_rs.get" + mapFunctionTypes.get(column.getBaseType()) + "(\"";
         	        
         	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
         	        	output += "id";
@@ -809,29 +829,31 @@ public class MyORM {
         	        
         	        output += "\n            \"    ";
         	        
-        	        switch(column.getDataType()) {
-	    	        	case java.sql.Types.BIGINT:
-	    	        	case java.sql.Types.INTEGER:
-	    	        	case java.sql.Types.SMALLINT:
-	    	        	case java.sql.Types.TINYINT:
-	    	        	case java.sql.Types.DECIMAL:
-	    	        	case java.sql.Types.DOUBLE:
-	    	        	case java.sql.Types.FLOAT:
+        	        switch(column.getBaseType()) {
+	    	        	case "BIGINT":
+	    	        	case "INT":
+	    	        	case "SMALLINT":
+	    	        	case "TINYINT":
+	    	        	case "DECIMAL":
+	    	        	case "DOUBLE":
+	    	        	case "FLOAT":
 	    	        		output += columnName + " = \" + (_" + memberName + " != null ? _" + memberName + " : \"null\")";
 	    	        		break;
-	    	        	case java.sql.Types.CHAR:
-	    	        	case java.sql.Types.VARCHAR:
-	    	        	case java.sql.Types.LONGVARCHAR:
+	    	        	case "CHAR":
+	    	        	case "VARCHAR":
+	    	        	case "LONGVARCHAR":
+	    	        	case "TEXT":
 	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"'\" + _" + memberName + " + \"'\" : \"null\")";	    	        		break;
-	    	        	case java.sql.Types.DATE:
-	    	        	case java.sql.Types.TIMESTAMP:
+	    	        	case "DATE":
+	    	        	case "DATETIME":
+	    	        	case "TIMESTAMP":
 	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"STR_TO_DATE(\" + _" + memberName + " + \", '%Y-%m-%d %H:%i:%s')\" : \"null\")";
 	    	        		break;
-	    	        	case java.sql.Types.BIT:
+	    	        	case "BIT":
 	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"b'\" + _" + memberName + " : \"null\")";
 	    	        		break;
 	    	        	default:
-	    	        		throw new Exception("Tipo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + memberName);
+	    	        		throw new Exception("Tipo no soportado: " + column.getBaseType() + " columna: " + memberName);
         	        } // end switch
         	        
         	    }
@@ -964,14 +986,14 @@ public class MyORM {
         	        
         	        output += "            \"    ";
         	        
-        	        switch(column.getDataType()) {
-	    	        	case java.sql.Types.BIGINT:
-	    	        	case java.sql.Types.INTEGER:
-	    	        	case java.sql.Types.SMALLINT:
-	    	        	case java.sql.Types.TINYINT:
-	    	        	case java.sql.Types.DECIMAL:
-	    	        	case java.sql.Types.DOUBLE:
-	    	        	case java.sql.Types.FLOAT:
+        	        switch(column.getBaseType()) {
+	    	        	case "BIGINT":
+	    	        	case "INT":
+	    	        	case "SMALLINT":
+	    	        	case "TINYINT":
+	    	        	case "DECIMAL":
+	    	        	case "DOUBLE":
+	    	        	case "FLOAT":
 	    	        		output += "\" + (_";
 	    	        		
 	            	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
@@ -993,20 +1015,22 @@ public class MyORM {
 	            	        output += " + \"'\" : \"null\")";
 	            	        
 	    	        		break;
-	    	        	case java.sql.Types.CHAR:
-	    	        	case java.sql.Types.VARCHAR:
-	    	        	case java.sql.Types.LONGVARCHAR:
+	    	        	case "CHAR":
+	    	        	case "VARCHAR":
+	    	        	case "LONGVARCHAR":
+	    	        	case "TEXT":
 	    	        		output += "\" + (_" + memberName + " != null ? \"'\" + _" + memberName + " + \"'\" : \"null\")";
 	    	        		break;
-	    	        	case java.sql.Types.DATE:
-	    	        	case java.sql.Types.TIMESTAMP:
+	    	        	case "DATE":
+	    	        	case "DATETIME":
+	    	        	case "TIMESTAMP":
 	    	        		output += "\" + (_" + memberName + " != null ? \"STR_TO_DATE(\" + _" + memberName + " + \", '%Y-%m-%d %H:%i:%s')\" : \"null\")";
 	    	        		break;
-	    	        	case java.sql.Types.BIT:
+	    	        	case "BIT":
 	    	        		output += "\" + (_" + memberName + " != null ? \"b'\" + (_" + memberName + " ? 1 : 0) + \"'\" : \"null\")";
 	    	        		break;
 	    	        	default:
-	    	        		throw new Exception("Tipo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + columnName);
+	    	        		throw new Exception("Tipo no soportado: " + column.getBaseType() + " columna: " + columnName);
         	        } // end switch
         	        
         	    }
@@ -1374,14 +1398,14 @@ public class MyORM {
         	        
         	        output += "\n	           \"    _";
         	        
-        	        switch(column.getDataType()) {
-	    	        	case java.sql.Types.BIGINT:
-	    	        	case java.sql.Types.INTEGER:
-	    	        	case java.sql.Types.SMALLINT:
-	    	        	case java.sql.Types.TINYINT:
-	    	        	case java.sql.Types.DECIMAL:
-	    	        	case java.sql.Types.DOUBLE:
-	    	        	case java.sql.Types.FLOAT:
+        	        switch(column.getBaseType()) {
+	    	        	case "BIGINT":
+	    	        	case "INT":
+	    	        	case "SMALLINT":
+	    	        	case "TINYINT":
+	    	        	case "DECIMAL":
+	    	        	case "DOUBLE":
+	    	        	case "FLOAT":
 
 	            	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
 	            	        	output += "id";
@@ -1411,19 +1435,21 @@ public class MyORM {
 	            	        output += " : \"null\")";
 	            	        
 	    	        		break;
-	    	        	case java.sql.Types.CHAR:
-	    	        	case java.sql.Types.VARCHAR:
-	    	        	case java.sql.Types.LONGVARCHAR:
+	    	        	case "CHAR":
+	    	        	case "VARCHAR":
+	    	        	case "LONGVARCHAR":
+	    	        	case "TEXT":
 	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"'\" + _" + memberName + " + \"'\" : \"null\")";	    	        		break;
-	    	        	case java.sql.Types.DATE:
-	    	        	case java.sql.Types.TIMESTAMP:
+	    	        	case "DATE":
+	    	        	case "DATETIME":
+	    	        	case "TIMESTAMP":
 	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"STR_TO_DATE(\" + _" + memberName + " + \", '%Y-%m-%d %H:%i:%s')\" : \"null\")";
 	    	        		break;
-	    	        	case java.sql.Types.BIT:
+	    	        	case "BIT":
 	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"b'\" + _" + memberName + " : \"null\")";
 	    	        		break;
 	    	        	default:
-	    	        		throw new Exception("Tipo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + columnName);
+	    	        		throw new Exception("Tipo no soportado: " + column.getBaseType() + " columna: " + columnName);
         	        } // end switch
         	        
         	    }
@@ -1462,14 +1488,14 @@ public class MyORM {
         	        
         	        output += "\n	           \"    \\\"_";
         	        
-        	        switch(column.getDataType()) {
-	    	        	case java.sql.Types.BIGINT:
-	    	        	case java.sql.Types.INTEGER:
-	    	        	case java.sql.Types.SMALLINT:
-	    	        	case java.sql.Types.TINYINT:
-	    	        	case java.sql.Types.DECIMAL:
-	    	        	case java.sql.Types.DOUBLE:
-	    	        	case java.sql.Types.FLOAT:
+        	        switch(column.getBaseType()) {
+	    	        	case "BIGINT":
+	    	        	case "INT":
+	    	        	case "SMALLINT":
+	    	        	case "TINYINT":
+	    	        	case "DECIMAL":
+	    	        	case "DOUBLE":
+	    	        	case "FLOAT":
 
 	            	        if (mapPrimaryKeys.size() == 1 && mapPrimaryKeys.containsKey(columnName)) {
 	            	        	output += "id";
@@ -1499,17 +1525,19 @@ public class MyORM {
 	            	        output += " : \"null\")";
 	            	        
 	    	        		break;
-	    	        	case java.sql.Types.CHAR:
-	    	        	case java.sql.Types.VARCHAR:
-	    	        	case java.sql.Types.LONGVARCHAR:
-	    	        	case java.sql.Types.DATE:
-	    	        	case java.sql.Types.TIMESTAMP:
+	    	        	case "CHAR":
+	    	        	case "VARCHAR":
+	    	        	case "LONGVARCHAR":
+	    	        	case "TEXT":
+	    	        	case "DATE":
+	    	        	case "DATETIME":
+	    	        	case "TIMESTAMP":
 	    	        		output += columnName + "\\\" : \" + (_" + memberName + " != null ? \"\\\"\" + _" + memberName + " + \"\\\"\" : \"null\")";	    	        		break;
-	    	        	case java.sql.Types.BIT:
+	    	        	case "BIT":
 	    	        		output += columnName + "\\\" : \" + (_" + memberName + " != null ? \"b'\" + _" + memberName + " : \"null\")";
 	    	        		break;
 	    	        	default:
-	    	        		throw new Exception("Tipo no soportado: " + String.valueOf(column.getDataType()) + " columna: " + columnName);
+	    	        		throw new Exception("Tipo no soportado: " + column.getBaseType() + " columna: " + columnName);
         	        } // end switch
         	        
         	    }
@@ -1599,6 +1627,8 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
+        	        logger.debug(column.toString());
+        	        
         	        String memberName = toJavaFieldName(columnName);
         	        
         	        output += 
@@ -1613,14 +1643,14 @@ public class MyORM {
         	        
         	        output += "(";
         	        
-        	        if (mapFunctionTypes.get(column.getDataType()).equals("String") ) {
+        	        if (mapFunctionTypes.get(column.getBaseType()).equals("String") ) {
         	        	output += "element.getElementsByTagName(\"" + columnName + "\").item(0).getTextContent()";
         	        }
-        	        else if (mapFunctionTypes.get(column.getDataType()).equals("Boolean") ) {
-        	        	output += mapJavaTypes.get(column.getDataType()) + ".valueOf(element.getElementsByTagName(\"" + columnName + "\").item(0).getTextContent())";
+        	        else if (mapFunctionTypes.get(column.getBaseType()).equals("Boolean") || mapFunctionTypes.get(column.getBaseType()).equals("Double")) {
+        	        	output += mapJavaTypes.get(column.getBaseType()) + ".valueOf(element.getElementsByTagName(\"" + columnName + "\").item(0).getTextContent())";
         	        }
         	        else {
-        	        	output += mapJavaTypes.get(column.getDataType()) + ".decode(element.getElementsByTagName(\"" + columnName + "\").item(0).getTextContent())";
+        	        	output += mapJavaTypes.get(column.getBaseType()) + ".decode(element.getElementsByTagName(\"" + columnName + "\").item(0).getTextContent())";
         	        }
 
         	        output += 
@@ -1682,7 +1712,7 @@ public class MyORM {
 	private static String buildWhereSentence(
 		Map<String, Column> p_mapColumns,
 		Map<String, PrimaryKey> p_mapPrimaryKeys,
-		Map<Integer, String> p_mapJavaTypes
+		Map<String, String> p_mapJavaTypes
 	) 
 	{
 		String res = "";
@@ -1702,7 +1732,7 @@ public class MyORM {
 	        	res += " + \" AND\" +\n";
 	        }
 
-	        res += "            \"    " + columnName + " = \" + " + p_mapJavaTypes.get(p_mapColumns.get(columnName).getDataType()) + ".toString(this._";
+	        res += "            \"    " + columnName + " = \" + " + p_mapJavaTypes.get(p_mapColumns.get(columnName).getBaseType()) + ".toString(this._";
 	        
 	        if (p_mapPrimaryKeys.size() == 1) {
 	        	res += "id";
