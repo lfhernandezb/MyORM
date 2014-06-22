@@ -9,7 +9,7 @@ TMP_DIR=/var/tmp
 CLASSPATH=\
 $JAVA_HOME/lib/tools.jar:
 CLASSPATH=\
-$PROGRAM_PATH/../bin/MyORM.jar
+$PROGRAM_PATH/../dist/MyORM.jar
 
 # seteando el classpath
 . $PROGRAM_PATH/env.sh
