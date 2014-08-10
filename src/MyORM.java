@@ -591,7 +591,7 @@ public class MyORM {
     	        
     	        if (mapPrimaryKeys.size() == 1) {
         	        output +=
-        	        	"    public static " + className + " getById(Connection p_conn, String p_id) throws Exception {\n" +
+        	        	"    public static " + className + " getById(Connection p_conn, String p_id) throws SQLException {\n" +
         	        	"        return getByParameter(p_conn, \"id_" + tableName + "\", p_id);\n" +
         	        	"    }\n";
     	        }
@@ -602,7 +602,7 @@ public class MyORM {
         	    
     	        output +=
         	        	"    \n" +
-        	        	"    public static ArrayList<" + className + "> seek(Connection p_conn, ArrayList<AbstractMap.SimpleEntry<String, String>> p_parameters, String p_order, String p_direction, int p_offset, int p_limit) throws Exception {\n" +
+        	        	"    public static ArrayList<" + className + "> seek(Connection p_conn, ArrayList<AbstractMap.SimpleEntry<String, String>> p_parameters, String p_order, String p_direction, int p_offset, int p_limit) throws UnsupportedParameter, SQLException {\n" +
         	        	"        Statement stmt = null;\n" +
         	        	"        ResultSet rs = null;\n" +
         	        	"        String str_sql;\n" +
@@ -676,7 +676,7 @@ public class MyORM {
         	        
         	        output += 
             	        	"if (p.getKey().equals(\"mas reciente\")) {\n" +
-                    	    "                    array_clauses.add(\"" + tableShortAlias + ".fecha_modificacion > STR_TO_DATE(\" + p.getValue() + \", '%Y-%m-%d %H:%i:%s')\");\n" +
+                    	    "                    array_clauses.add(\"" + tableShortAlias + ".fecha_modificacion > STR_TO_DATE('\" + p.getValue() + \"', '%Y-%m-%d %H:%i:%s')\");\n" +
                     	    "                }\n";
 
         	    }
@@ -709,7 +709,7 @@ public class MyORM {
 
         	    output +=
     	        	"                else {\n" +
-    	        	"                    throw new Exception(\"Parametro no soportado: \" + p.getKey());\n" +
+    	        	"                    throw new UnsupportedParameter(\"Parametro no soportado: \" + p.getKey());\n" +
         	        "                }\n" +
     	        	"            }\n" +
     	        	"                                \n" +
@@ -757,7 +757,7 @@ public class MyORM {
     	        	"            \n" +
     	        	"            throw ex;\n" +
     	        	"        }\n" +
-    	        	"        catch (Exception ex) {\n" +
+    	        	"        catch (UnsupportedParameter ex) {\n" +
     	        	"            throw ex;\n" +
     	        	"        }\n" +
     	        	"        finally {\n" +
@@ -847,10 +847,10 @@ public class MyORM {
 	    	        	case "DATE":
 	    	        	case "DATETIME":
 	    	        	case "TIMESTAMP":
-	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"STR_TO_DATE(\" + _" + memberName + " + \", '%Y-%m-%d %H:%i:%s')\" : \"null\")";
+	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"STR_TO_DATE('\" + _" + memberName + " + \"', '%Y-%m-%d %H:%i:%s')\" : \"null\")";
 	    	        		break;
 	    	        	case "BIT":
-	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"b'\" + _" + memberName + " : \"null\")";
+	    	        		output += columnName + " = \" + (_" + memberName + " != null ? \"b'\" + (_" + memberName + " ? 1 : 0) + \"'\" : \"null\")";
 	    	        		break;
 	    	        	default:
 	    	        		throw new Exception("Tipo no soportado: " + column.getBaseType() + " columna: " + memberName);
@@ -1024,7 +1024,7 @@ public class MyORM {
 	    	        	case "DATE":
 	    	        	case "DATETIME":
 	    	        	case "TIMESTAMP":
-	    	        		output += "\" + (_" + memberName + " != null ? \"STR_TO_DATE(\" + _" + memberName + " + \", '%Y-%m-%d %H:%i:%s')\" : \"null\")";
+	    	        		output += "\" + (_" + memberName + " != null ? \"STR_TO_DATE('\" + _" + memberName + " + \"', '%Y-%m-%d %H:%i:%s')\" : \"null\")";
 	    	        		break;
 	    	        	case "BIT":
 	    	        		output += "\" + (_" + memberName + " != null ? \"b'\" + (_" + memberName + " ? 1 : 0) + \"'\" : \"null\")";
