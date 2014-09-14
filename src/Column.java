@@ -98,7 +98,7 @@ public class Column {
 		c.setNullable(rs.getInt(11));
 		c.setColumnDef(rs.getString(13));
 		c.setOrdinalPosition(rs.getInt(17));
-		c.setIsAutoincrement("NO");
+		c.setIsAutoincrement(rs.getString(23));
 		
 		c.setMemberName(Util.toJavaFieldName(c.getColumnName()));
 		

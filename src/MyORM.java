@@ -159,16 +159,18 @@ public class MyORM {
         	    //rsIndexInfo = databaseMetaData.getIndexInfo(null, null, tableNamePattern, false, false);
         	    rsImportedKeys = databaseMetaData.getImportedKeys(null, null, tableNamePattern);
         	    
-        	    logger.debug("columns:");
+        	    //logger.debug("columns:");
         	    
         	    while(rsColumns.next()){
         	        String columnName = rsColumns.getString(4);
         	        
         	        /*
-        	        if (tableName.equals("vehiculo")) {
+        	        if (tableName.equals("usuario")) {
         	        	logger.debug(Column.fromRS(rsColumns).toString());
         	        }
         	        */
+        	        
+        	        logger.debug(Column.fromRS(rsColumns).toString());
         	        
         	        mapColumns.put(columnName, Column.fromRS(rsColumns));
         	    }
@@ -256,11 +258,11 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        
+        	        /*
         	        if (tableName.equals("usuario")) {
         	        	logger.debug("column: " + columnName + " data type: " + column.getDataType());
         	        }
-        	        
+        	        */
         	        if (!bFirst) {
         	        	bFirst = true;
         	        }
@@ -933,7 +935,7 @@ public class MyORM {
         	        String memberName = toJavaFieldName(columnName);
         	        
         	        // no se insertan las llaves primarias autoincrementales
-        	        if (mapPrimaryKeys.containsKey(columnName) && column.getIsAutoincrement() == "YES") {
+        	        if (mapPrimaryKeys.containsKey(columnName) && column.getIsAutoincrement().equals("YES")) {
         	        	continue;
         	        }
         	        
@@ -968,7 +970,7 @@ public class MyORM {
         	        String memberName = toJavaFieldName(columnName);
         	        
         	        // no se insertan las llaves primarias autoincrementales
-        	        if (mapPrimaryKeys.containsKey(columnName) && column.getIsAutoincrement() == "YES") {
+        	        if (mapPrimaryKeys.containsKey(columnName) && column.getIsAutoincrement().equals("YES")) {
         	        	continue;
         	        }
         	        
@@ -1048,7 +1050,7 @@ public class MyORM {
     	        if (mapPrimaryKeys.size() == 1) {
     	        	
     	        	for (Map.Entry<String, PrimaryKey> entry : mapPrimaryKeys.entrySet()) {
-    	        		if (mapColumns.get(entry.getKey()).getIsAutoincrement() == "YES") {
+    	        		if (mapColumns.get(entry.getKey()).getIsAutoincrement().equals("YES")) {
     	        			bFlag = true;
     	        		}
     	        	}
@@ -1627,7 +1629,7 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        logger.debug(column.toString());
+        	        //logger.debug(column.toString());
         	        
         	        String memberName = toJavaFieldName(columnName);
         	        
