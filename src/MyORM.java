@@ -216,6 +216,7 @@ public class MyORM {
 					"import java.util.ArrayList;\n" +
 					"import org.w3c.dom.Element;\n" +
 					"import org.w3c.dom.Node;\n" +
+					"import cl.dsoft.UnsupportedParameterException;\n" +
 					"\n" +
 					"/**\n" +
 					" * @author petete-ntbk\n" +
@@ -604,7 +605,7 @@ public class MyORM {
         	    
     	        output +=
         	        	"    \n" +
-        	        	"    public static ArrayList<" + className + "> seek(Connection p_conn, ArrayList<AbstractMap.SimpleEntry<String, String>> p_parameters, String p_order, String p_direction, int p_offset, int p_limit) throws UnsupportedParameter, SQLException {\n" +
+        	        	"    public static ArrayList<" + className + "> seek(Connection p_conn, ArrayList<AbstractMap.SimpleEntry<String, String>> p_parameters, String p_order, String p_direction, int p_offset, int p_limit) throws UnsupportedParameterException, SQLException {\n" +
         	        	"        Statement stmt = null;\n" +
         	        	"        ResultSet rs = null;\n" +
         	        	"        String str_sql;\n" +
@@ -711,7 +712,7 @@ public class MyORM {
 
         	    output +=
     	        	"                else {\n" +
-    	        	"                    throw new UnsupportedParameter(\"Parametro no soportado: \" + p.getKey());\n" +
+    	        	"                    throw new UnsupportedParameterException(\"Parametro no soportado: \" + p.getKey());\n" +
         	        "                }\n" +
     	        	"            }\n" +
     	        	"                                \n" +
@@ -759,7 +760,7 @@ public class MyORM {
     	        	"            \n" +
     	        	"            throw ex;\n" +
     	        	"        }\n" +
-    	        	"        catch (UnsupportedParameter ex) {\n" +
+    	        	"        catch (UnsupportedParameterException ex) {\n" +
     	        	"            throw ex;\n" +
     	        	"        }\n" +
     	        	"        finally {\n" +
@@ -1045,12 +1046,14 @@ public class MyORM {
     	        	"\n" +
     	        	"            ret = stmt.executeUpdate(str_sql";
         	    
-        	    Boolean bFlag = false; 
+        	    Boolean bFlag = false;
+        	    String uniquePrimaryKeyColumnName = "";
         	    
     	        if (mapPrimaryKeys.size() == 1) {
     	        	
     	        	for (Map.Entry<String, PrimaryKey> entry : mapPrimaryKeys.entrySet()) {
     	        		if (mapColumns.get(entry.getKey()).getIsAutoincrement().equals("YES")) {
+    	        			uniquePrimaryKeyColumnName = entry.getKey();
     	        			bFlag = true;
     	        		}
     	        	}
@@ -1065,7 +1068,7 @@ public class MyORM {
         	        	"            rs = stmt.getGeneratedKeys();\n" +
         	        	"\n" +
         	        	"            if (rs.next()) {\n" +
-        	        	"                _id = rs.getInt(1);\n" +
+        	        	"                _id = rs.get" + mapFunctionTypes.get(mapColumns.get(uniquePrimaryKeyColumnName).getBaseType()) + "(1);\n" +
         	        	"            } else {\n" +
         	        	"                // throw an exception from here\n" +
         	        	"                // throw new Exception(\"Error al obtener id\");\n" +

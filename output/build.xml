@@ -50,7 +50,7 @@
 
   <!--Creates the deployable jar file  -->
   <target name="jar" depends="compile">
-    <jar destfile="${dist.dir}\MyORM.jar" basedir="${build.dir}">
+    <jar destfile="${dist.dir}\cl.dsoft.car.server.db.jar" basedir="${build.dir}">
       <manifest>
         <attribute name="Main-Class" value="test.Main" />
       </manifest>
