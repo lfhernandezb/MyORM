@@ -216,7 +216,7 @@ public class MyORM {
 					"import java.util.ArrayList;\n" +
 					"import org.w3c.dom.Element;\n" +
 					"import org.w3c.dom.Node;\n" +
-					"import cl.dsoft.UnsupportedParameterException;\n" +
+					"import cl.dsoft.car.misc.UnsupportedParameterException;\n" +
 					"\n" +
 					"/**\n" +
 					" * @author petete-ntbk\n" +

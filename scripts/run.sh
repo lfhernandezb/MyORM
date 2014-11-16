@@ -25,7 +25,7 @@ $JAVA_HOME/bin/java \
 -Dpackage_name=cl.dsoft.car.server.db \
 -Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.Log4JLogger \
 -Dconfig_file=$PROGRAM_PATH/../etc/config.ini \
--Doutput_dir=$PROGRAM_PATH/../output/src/cl/dsoft/car/server/db \
+-Doutput_dir=$PROGRAM_PATH/../output/src \
 -cp $CLASSPATH \
 MyORM
 
