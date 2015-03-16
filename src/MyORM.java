@@ -170,7 +170,7 @@ public class MyORM {
         	        }
         	        */
         	        
-        	        logger.debug(Column.fromRS(rsColumns).toString());
+        	        //logger.debug(Column.fromRS(rsColumns).toString());
         	        
         	        mapColumns.put(columnName, Column.fromRS(rsColumns));
         	    }
@@ -1651,7 +1651,7 @@ public class MyORM {
         	        if (mapFunctionTypes.get(column.getBaseType()).equals("String") ) {
         	        	output += "element.getElementsByTagName(\"" + columnName + "\").item(0).getTextContent()";
         	        }
-        	        else if (mapFunctionTypes.get(column.getBaseType()).equals("Boolean") || mapFunctionTypes.get(column.getBaseType()).equals("Double")) {
+        	        else if (mapFunctionTypes.get(column.getBaseType()).equals("Boolean") || mapFunctionTypes.get(column.getBaseType()).equals("Double") || mapFunctionTypes.get(column.getBaseType()).equals("Float")) {
         	        	output += mapJavaTypes.get(column.getBaseType()) + ".valueOf(element.getElementsByTagName(\"" + columnName + "\").item(0).getTextContent())";
         	        }
         	        else {
