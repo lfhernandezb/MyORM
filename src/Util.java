@@ -9,4 +9,12 @@ public class Util {
 	    name0 = WordUtils.uncapitalize(name0); // to "myColumn"
 	    return name0;
 	}
+	
+	public static String toJavaClassName(String name) { // "MY_TABLE"
+	    String name0 = name.replace("_", " "); // to "MY TABLE"
+	    name0 = WordUtils.capitalizeFully(name0); // to "My Table"
+	    name0 = name0.replace(" ", ""); // to "MyTable"
+	    return name0;
+	}
+	
 }

@@ -8,8 +8,10 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+
+import javax.activation.UnsupportedDataTypeException;
 
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.log4j.Logger;
@@ -46,6 +48,7 @@ public class MyORM {
 		String    catalog;
 		String    schemaPattern;
 		String    tableNamePattern;
+		String    outputTrigger;
 		String[]  types;
 		
 		Map<String, Column> mapColumns;
@@ -97,11 +100,11 @@ public class MyORM {
     		tableNamePattern = null;
     		types            = null;
     		
-    		mapColumns = new HashMap<String, Column>();
-    		mapPrimaryKeys = new HashMap<String, PrimaryKey>();
-    		mapForeignKeys = new HashMap<String, ForeignKey>();
-    		mapJavaTypes = new HashMap<String, String>();
-    		mapFunctionTypes = new HashMap<String, String>();
+    		mapColumns = new LinkedHashMap<String, Column>();
+    		mapPrimaryKeys = new LinkedHashMap<String, PrimaryKey>();
+    		mapForeignKeys = new LinkedHashMap<String, ForeignKey>();
+    		mapJavaTypes = new LinkedHashMap<String, String>();
+    		mapFunctionTypes = new LinkedHashMap<String, String>();
     		
     		mapJavaTypes.put("BIGINT", "Long");
     		mapJavaTypes.put("INT", "Integer");
@@ -139,14 +142,22 @@ public class MyORM {
     		mapFunctionTypes.put("FLOAT", "Float");
         	
         	rs = databaseMetaData.getTables(catalog, schemaPattern, tableNamePattern, types );
+        	
+        	outputTrigger = "";
 
         	while(rs.next()) {
+        		
+        		Table table = Table.fromRS(rs);
+        		
+        		if (!table.getType().equals("TABLE")) {
+        			continue;
+        		}
         		
         		mapColumns.clear();
         		mapPrimaryKeys.clear();
         		mapForeignKeys.clear();
         		
-        	    String tableName = rs.getString(3);
+        	    String tableName = table.getName();
         	    
         	    logger.debug("table: " + tableName);
         	    
@@ -187,7 +198,7 @@ public class MyORM {
         	    	mapForeignKeys.put(columnName, ForeignKey.fromRS(rsImportedKeys));
         	    }
 
-        	    String className = toJavaClassName(tableName);
+        	    String className = Util.toJavaClassName(tableName);
         	    /*
         	    int pos = tableName.indexOf("_");
         	    
@@ -231,7 +242,7 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	        
         	        output += "    protected " + mapJavaTypes.get(column.getBaseType()) + " _";
 
@@ -325,7 +336,7 @@ public class MyORM {
         	    	
         	        String columnName = entry.getKey();
         	        //Column column = entry.getValue();
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	        
         	        output += "        _";
         	        
@@ -351,7 +362,7 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	        
         	        output +=
         	        	"    /**\n" +
@@ -402,7 +413,7 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	        
         	        output +=
             	        	"    /**\n" +
@@ -488,7 +499,7 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	        
         	        output += 
         	        	"        ret.set"; 
@@ -811,7 +822,7 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	        
         	        // no se actualizan las llaves primarias
         	        if (mapPrimaryKeys.containsKey(columnName)) {
@@ -933,7 +944,7 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	        
         	        // no se insertan las llaves primarias autoincrementales
         	        if (mapPrimaryKeys.containsKey(columnName) && column.getIsAutoincrement().equals("YES")) {
@@ -968,7 +979,7 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	        
         	        // no se insertan las llaves primarias autoincrementales
         	        if (mapPrimaryKeys.containsKey(columnName) && column.getIsAutoincrement().equals("YES")) {
@@ -1225,7 +1236,7 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	        
         	        // no se cargan las llaves primarias
         	        if (mapPrimaryKeys.containsKey(columnName)) {
@@ -1392,7 +1403,7 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	        
         	        if (!bFirst) {
         	        	bFirst = true;
@@ -1482,7 +1493,7 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	        
         	        if (!bFirst) {
         	        	bFirst = true;
@@ -1568,7 +1579,7 @@ public class MyORM {
         	        String columnName = entry.getKey();
         	        Column column = entry.getValue();
         	        
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	                	        
         	        output += "\n	           \"    <";
         	        
@@ -1634,7 +1645,7 @@ public class MyORM {
         	        
         	        //logger.debug(column.toString());
         	        
-        	        String memberName = toJavaFieldName(columnName);
+        	        String memberName = Util.toJavaFieldName(columnName);
         	        
         	        output += 
         	        	"        ret.set"; 
@@ -1670,6 +1681,8 @@ public class MyORM {
 
         	           	    
         	    // fin fromXMLNode
+        	    
+        	    outputTrigger += getTrigger(tableName, mapColumns, mapPrimaryKeys);
     	        
     	        // fin clase
     	        
@@ -1688,7 +1701,7 @@ public class MyORM {
         	
     		conn.close();
     		
-        	
+    		writeToFile(System.getProperty("output_dir") + "/triggers.sql", outputTrigger);
 
         }
 		catch (SQLException ex) {
@@ -1713,6 +1726,33 @@ public class MyORM {
         	ex.printStackTrace();
         }
 	}
+	
+	private static String getTrigger(String tableName, Map<String, Column> mapColumns, Map<String, PrimaryKey> mapPrimaryKeys) throws UnsupportedDataTypeException {
+		// TODO Auto-generated method stub
+		String output;
+		Boolean bFirst;
+		
+		output = "";
+		
+		if (mapColumns.containsKey("fecha_modificacion")) {
+			
+			output +=
+				"  DROP TRIGGER IF EXISTS actualiza_" + tableName + ";\n\n" +
+		    	"  -- actualiza 'fecha_modificacion' al actualizar cualquier columna de '" + tableName + "'\n" +
+		    	"  DELIMITER $$\n" +
+		    	"  CREATE TRIGGER actualiza_" + tableName + " BEFORE UPDATE ON " + tableName + "\n" +
+		    	"  FOR EACH ROW\n" +
+		    	"  BEGIN\n" +
+		    	"    SET NEW.fecha_modificacion = CURRENT_TIMESTAMP;\n" +
+		    	"  END;$$\n" +
+				"  DELIMITER ;\n\n";
+			
+		    bFirst =  false;
+		    
+		}
+	    
+		return output;
+	}
 
 	private static String buildWhereSentence(
 		Map<String, Column> p_mapColumns,
@@ -1728,7 +1768,7 @@ public class MyORM {
 	        String columnName = entry.getKey();
 	        PrimaryKey pk = entry.getValue();
 	        
-	        String memberName = toJavaFieldName(columnName);
+	        String memberName = Util.toJavaFieldName(columnName);
 	        
 	        if (!bFirst) {
 	        	bFirst = true;
@@ -1770,19 +1810,4 @@ public class MyORM {
 		System.out.println("Done");
 	}
 	
-	private static String toJavaFieldName(String name) { // "MY_COLUMN"
-	    String name0 = name.replace("_", " "); // to "MY COLUMN"
-	    name0 = WordUtils.capitalizeFully(name0); // to "My Column"
-	    name0 = name0.replace(" ", ""); // to "MyColumn"
-	    name0 = WordUtils.uncapitalize(name0); // to "myColumn"
-	    return name0;
-	}
-
-	private static String toJavaClassName(String name) { // "MY_TABLE"
-	    String name0 = name.replace("_", " "); // to "MY TABLE"
-	    name0 = WordUtils.capitalizeFully(name0); // to "My Table"
-	    name0 = name0.replace(" ", ""); // to "MyTable"
-	    return name0;
-	}
-
 }
